@@ -10,3 +10,7 @@ export class TransformError extends Error {
     this.loc = loc;
   }
 }
+
+export function isTransformError(error: Error): error is TransformError {
+  return (error as TransformError).loc != null;
+}

@@ -29,7 +29,7 @@ function isCustomTypeReference(
 
 function convertCustomTypeReference(
   path: NodePath<t.Identifier>,
-  mapping: Map<string, string>
+  mapping: ReadonlyMap<string, string>
 ): t.TSType {
   const name = mapping.get(path.node.name) || path.node.name;
   return t.tsTypeReference(t.identifier(name));
@@ -93,6 +93,10 @@ function convertPrimitive(path: NodePath<t.MemberExpression>): t.TSType {
         makeRenderableType(),
         t.tsArrayType(makeRenderableType()),
       ]);
+    case "object":
+      return t.tsObjectKeyword();
+    case "any":
+      return t.tsAnyKeyword();
     default:
       throw new TransformError(
         "Unable to convert primitive type.",
@@ -134,7 +138,7 @@ function getArg(path: NodePath<t.CallExpression>): NodePath<t.Expression> {
 
 export function convertPropType(
   pathArg: NodePath<t.Expression>,
-  mapping: Map<string, string>
+  mapping: ReadonlyMap<string, string>
 ): TSPropTypes {
   const optional = !isRequired(pathArg);
   const path = chopIsRequired(pathArg);
@@ -175,12 +179,19 @@ export function convertPropType(
     return { node, optional };
   }
 
+  if (isComplexType(path, "arrayOf")) {
+    const body = getArg(path);
+    const { node: elementType } = convertPropType(body, mapping);
+    const node = t.tsArrayType(elementType);
+    return { node, optional };
+  }
+
   throw new TransformError("Cannot convert prop-type.", path.node.loc?.start);
 }
 
 export function convertShape(
   path: NodePath<t.ObjectExpression>,
-  mapping: Map<string, string>
+  mapping: ReadonlyMap<string, string>
 ): t.TSTypeLiteral {
   const members: t.TSTypeElement[] = [];
   for (let property of path.get("properties")) {
@@ -193,7 +204,7 @@ export function convertShape(
 
 function convertProperty(
   path: NodePath<t.ObjectProperty>,
-  mapping: Map<string, string>
+  mapping: ReadonlyMap<string, string>
 ): t.TSTypeElement {
   const value = path.get("value");
   if (!value.isExpression()) {
@@ -211,7 +222,7 @@ function convertProperty(
 
 function convertUnion(
   path: NodePath<t.ArrayExpression>,
-  mapping: Map<string, string>
+  mapping: ReadonlyMap<string, string>
 ): t.TSType {
   const types: t.TSType[] = [];
   let optional = false;
@@ -321,7 +332,7 @@ export function isTSPropTypesDecl(
 
 export function makeTSPropTypeDeclaration(
   path: NodePath,
-  mapping: Map<string, string>
+  mapping: ReadonlyMap<string, string>
 ): t.ExportNamedDeclaration {
   if (!isPropTypesDecl(path)) {
     throw new TransformError(
