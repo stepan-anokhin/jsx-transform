@@ -1,7 +1,7 @@
 import { NodePath } from "@babel/traverse";
 import * as t from "@babel/types";
 import { makeJSXType } from "./prop-types";
-import { TransformError } from "../errors";
+import { TransformError } from "./TransformError";
 
 export function isComponentDecl(
   path: NodePath,

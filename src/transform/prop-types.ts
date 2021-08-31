@@ -1,6 +1,6 @@
+import * as t from "@babel/types";
 import { NodePath } from "@babel/traverse";
-import t, { ExportNamedDeclaration, Node } from "@babel/types";
-import { TransformError } from "../errors";
+import { TransformError } from "./TransformError";
 
 export type TSPropTypes = {
   node: t.TSType;
@@ -304,9 +304,9 @@ export function getPropTypeExpr(path: NodePath): NodePath<t.ObjectExpression> {
 }
 
 export function isTSPropTypesDecl(
-  path: NodePath<Node>,
+  path: NodePath,
   componentName: string
-): path is NodePath<ExportNamedDeclaration> {
+): path is NodePath<t.ExportNamedDeclaration> {
   if (!path.isExportNamedDeclaration({ exportKind: "type" })) {
     return false;
   }
