@@ -5,6 +5,8 @@ import JSFile from "./JSFile";
 import generate from "@babel/generator";
 import colors from "colors";
 import { isTransformError } from "./TransformError";
+import { extname } from "path";
+import { rmSync, writeFileSync } from "fs";
 
 export type Failure = {
   path: string;
@@ -102,3 +104,10 @@ export function printResults(results: ConverterResults) {
 }
 
 export const ignore: Handler = () => {};
+
+export const replace: Handler = (path: string, code: string) => {
+  const ext = extname(path);
+  const newPath = `${path.slice(0, -ext.length)}.tsx`;
+  writeFileSync(newPath, code, { encoding: "utf-8" });
+  rmSync(path);
+};
